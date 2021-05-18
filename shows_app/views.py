@@ -1,6 +1,7 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, HttpResponseRedirect
 from .models import *
 from time import gmtime, localtime, strftime
+from django.contrib import messages
 
 # Create your views here.
 
@@ -25,14 +26,23 @@ def new(request):
     return render(request, "new.html", context)
 
 def create(request):
-    network_id = request.POST["network"]
-    network = Network.objects.get(id=network_id)
-    title = request.POST["title"]
-    release_date = request.POST["release_date"]
-    description = request.POST["description"]
-    this_movie = Movie.objects.create(network=network, title=title, desc=description, release_date=release_date)
+    errors = Movie.objects.basic_validator(request.POST)
 
-    return redirect(f'/shows/{this_movie.id}')
+    if len(errors) > 0:
+        for key, value in errors.items():
+            messages.error(request, value)
+        return redirect('/shows/new')
+
+    else:
+
+        network_id = request.POST["network"]
+        network = Network.objects.get(id=network_id)
+        title = request.POST["title"]
+        release_date = request.POST["release_date"]
+        description = request.POST["description"]
+        this_movie = Movie.objects.create(network=network, title=title, desc=description, release_date=release_date)
+
+        return redirect(f'/shows/{this_movie.id}')
 
 def view_show(request,id):
     this_show = Movie.objects.get(id=id)
@@ -58,20 +68,28 @@ def edit(request,id):
     return render(request, "edit_show.html", context)
 
 def update(request,id):
-    this_movie = Movie.objects.get(id=id)
-    networkid = request.POST['network']
-    network = Network.objects.get(id=networkid)
-    title = request.POST['title']
-    description = request.POST['description']
-    release_date = request.POST['release_date']
+    errors = Movie.objects.basic_validator(request.POST)
 
-    this_movie.network = network
-    this_movie.title = title
-    this_movie.desc = description
-    this_movie.release_date = release_date
-    this_movie.save()
+    if len(errors) > 0:
+        for key, value in errors.items():
+            messages.error(request, value)
+        return redirect(f'/shows/{id}/edit')
 
-    return redirect(f'/shows/{id}')
+    else:
+        this_movie = Movie.objects.get(id=id)
+        networkid = request.POST['network']
+        network = Network.objects.get(id=networkid)
+        title = request.POST['title']
+        description = request.POST['description']
+        release_date = request.POST['release_date']
+
+        this_movie.network = network
+        this_movie.title = title
+        this_movie.desc = description
+        this_movie.release_date = release_date
+        this_movie.save()
+
+        return redirect(f'/shows/{id}')
 
 def destroy(request,id):
     this_movie = Movie.objects.get(id=id)
@@ -79,7 +97,16 @@ def destroy(request,id):
     return redirect('/shows')
 
 def add_network(request):
-    netname = request.POST["add_network"]
-    Network.objects.create(name=netname)
-    
-    return redirect("/shows/new")
+    errors = Network.objects.basic_validator(request.POST)
+    if len(errors) > 0:
+        for key, value in errors.items():
+            messages.error(request, value)
+        next = request.POST.get('next', '/')
+        return HttpResponseRedirect(next)
+
+    else:
+        netname = request.POST["add_network"]
+        Network.objects.create(name=netname)
+        next = request.POST.get('next', '/')
+        
+        return HttpResponseRedirect(next)
