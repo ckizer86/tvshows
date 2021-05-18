@@ -33,6 +33,7 @@
                     {% csrf_token %}
                     <div class="form-group">
                         <label for="exampleFormControlInput1">Title</label>
+                        <input name="movie_id" type="hidden" value="{{this_show.id}}">
                         <input name="title" type="text" class="form-control" id="exampleFormControlInput1" value="{{this_show.title}}">
                     </div>
                     <div class="row">

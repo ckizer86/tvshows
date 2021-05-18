@@ -26,7 +26,7 @@ def new(request):
     return render(request, "new.html", context)
 
 def create(request):
-    errors = Movie.objects.basic_validator(request.POST)
+    errors = Movie.objects.new_validator(request.POST)
 
     if len(errors) > 0:
         for key, value in errors.items():
